@@ -1,6 +1,6 @@
 //
 // Created by Octavio on 6/15/2024.
-//
+//cd /mnt/c/Users/mateo/Documents
 #include <curses.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -105,9 +105,6 @@ void DisplayBinary(unsigned char DISPLAY, unsigned int option) {
             break;
         case 4:
             printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mEl Espiral\033[0m\n\r\n\r");
-            break;
-        case 5:
-            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mEl Caos\033[0m\n\r\n\r");
             break;
         case 0:
             break;
@@ -248,44 +245,6 @@ void *ElEspiral() {
     }
 }
 
-void *ElCaos() {
-    Clear();
-    unsigned char DISPLAY = 0;
-    while (!QUIT) {
-        unsigned char SUB_DISPLAY_1 = 0x80;
-        unsigned char SUB_DISPLAY_2 = 0x01;
-
-        for (int i = 0; i < 4; i++) {
-            DISPLAY += SUB_DISPLAY_1;
-            SUB_DISPLAY_1 = SUB_DISPLAY_1 >> 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 5);
-            Delay(DELAY);
-            DISPLAY += SUB_DISPLAY_2;
-            SUB_DISPLAY_2 = SUB_DISPLAY_2 << 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 5);
-            Delay(DELAY);
-        }
-        for (int i = 0; i < 4; i++) {
-            DISPLAY -= SUB_DISPLAY_2;
-            SUB_DISPLAY_2 = SUB_DISPLAY_2 >> 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 5);
-            Delay(DELAY);
-            DISPLAY -= SUB_DISPLAY_1;
-            SUB_DISPLAY_1 = SUB_DISPLAY_1 << 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 5);
-            Delay(DELAY);
-        }
-    }
-}
-
 void App() {
     unsigned char option[1];
     Clear();
@@ -312,7 +271,6 @@ void App() {
         printf("2. El Choque\n\r");
         printf("3. El Rebote\n\r");
         printf("4. El Espiral\n\r");
-        printf("5. El Caos\n\r");
         printf("0. Salir\n\r");
         printf("-------------------------------------------------\n\r");
         printf("\n\rSeleccione una opcion: ");
@@ -363,15 +321,6 @@ void App() {
                 pthread_join(threads[0], NULL);
                 pthread_join(threads[1], NULL);
                 DELAY_4 = DELAY;
-
-                break;
-            case '5':
-                DELAY = DELAY_5;
-                pthread_create(&threads[0], NULL, KeyListener, NULL);
-                pthread_create(&threads[1], NULL, ElCaos, NULL);
-                pthread_join(threads[0], NULL);
-                pthread_join(threads[1], NULL);
-                DELAY_5 = DELAY;
 
                 break;
             case '0':
