@@ -8,11 +8,12 @@
 #include <string.h>
 
 // CONSTANTS
-#define PASSWORD "12345"
-#define QUIT_KEY 'q'
-#define DELAY_INTERVAL 250
-#define DEFAULT_DELAY 1000
+#define PASSWORD "12345" //contraseña
+#define QUIT_KEY 'q' //tecla para salir
+#define DELAY_INTERVAL 250 //la variación de los intervalos
+#define DEFAULT_DELAY 1000 //el delay por default
 
+//variables del delay
 unsigned int QUIT;
 size_t DELAY;
 size_t DELAY_1 = DEFAULT_DELAY;
@@ -124,14 +125,16 @@ void DisplayBinary(unsigned char DISPLAY, unsigned int option) {
 
 void *KeyListener() {
     while (!QUIT) {
-        int key = getch();
+        int key = getc5h();
         if (key == QUIT_KEY)
             QUIT = 1;
-        else if (key == KEY_UP) {
+        else if (key == KEY_DOWN) {
             if (DELAY - DELAY_INTERVAL != 0)
                 DELAY -= DELAY_INTERVAL;
-        } else if (key == KEY_DOWN) {
-            DELAY += DELAY_INTERVAL;
+        } else if (key == KEY_UP) {
+            if(DELAY + DELAY_INTERVAL < 3001){
+                DELAY += DELAY_INTERVAL;
+            }
         }
     }
 }
