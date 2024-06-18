@@ -1,131 +1,40 @@
-//
-// Created by Octavio on 6/15/2024.
-//
 #include <curses.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include "EasyPio"
+#include "assembly.h"
 
-// CONSTANTS
-#define PASSWORD "12345"
-#define QUIT_KEY 'q'
+// Constantes
 #define DELAY_INTERVAL 250
 #define DEFAULT_DELAY 1000
+#define NUM_LEDS 8
+#define NUM_PATTERNS 14
 
 unsigned int QUIT;
 size_t DELAY;
-size_t DELAY_1 = DEFAULT_DELAY;
-size_t DELAY_2 = DEFAULT_DELAY;
-size_t DELAY_3 = DEFAULT_DELAY;
-size_t DELAY_4 = DEFAULT_DELAY;
-size_t DELAY_5 = DEFAULT_DELAY;
+size_t DELAY_1 = DEFAULT_DELAY, DELAY_2 = DEFAULT_DELAY, DELAY_3 = DEFAULT_DELAY, DELAY_4 = DEFAULT_DELAY, DELAY_5 = DEFAULT_DELAY;
 
-void Delay(size_t a) {
-    a = a * 100000;
-    while (a--)
-        ;
-}
+void delay(size_t a);
 
-void MoveCursorToOrigin() {
-    unsigned int i = 10;
-    while (i--)
-        printf("\033[F");
-}
+void moveCursorToOrigin();
 
-void Clear() {
-    printf("\033[2J");
-    MoveCursorToOrigin();
-}
+void clear();
 
-unsigned int Login() {
-    char *right_password = PASSWORD;
-    char input[5];
-    int i = 0;
-    char c;
-    printf("Ingrese su password de 5 digitos: ");
+void displayBinary(unsigned char DISPLAY, unsigned int option);
 
-    while (1) {
-        c = getchar();
+void configurarPines(void);
 
-        if (c == '\n') {
-            input[i] = '\0';
-            break;
-        } else if (c == 127 || c == '\b') {
-            if (i > 0) {
-                i--;
-                printf("\b \b");
-            }
-        } else {
-            if (i < 5) {
-                printf("*");
-                input[i] = c;
-                i++;
-            }
-        }
-        if (i == 5)
-            break;
-    }
+void mostrarLuces(unsigned char output);
 
-    input[i] = '\0';
+void apagarLeds();
 
-    if (strcmp(input, right_password) == 0) {
-        printf("\n\n\rAccess Granted!\n\r");
-        return 1;
-    } else {
-        printf("\n\n\rAccess Denied!\n\r");
-        return 0;
-    }
-}
-
-void DisplayBinary(unsigned char DISPLAY, unsigned int option) {
-    char display[8];
-    int i = 0;
-    for (unsigned int POINTER = 0x80; POINTER > 0; POINTER = POINTER >> 1) {
-        if (POINTER & DISPLAY) {
-            display[i] = '*';
-            i++;
-        } else {
-            display[i] = '_';
-            i++;
-        }
-    }
-
-    switch (option) {
-        case 1:
-            printf(
-                    "\033[1;31mSECUENCIA:\033[0m \033[1;36mAuto Fantastico\033[0m\n\r\n\r");
-            break;
-        case 2:
-            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mEl Choque\033[0m\n\r\n\r");
-            break;
-        case 3:
-            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mEl Rebote\033[0m\n\r\n\r");
-            break;
-        case 4:
-            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mEl Espiral\033[0m\n\r\n\r");
-            break;
-        case 5:
-            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mEl Caos\033[0m\n\r\n\r");
-            break;
-        case 0:
-            break;
-    }
-
-    printf("%s\n\n\r\033[1;33mDELAY: \033[0m%d   ", display, DELAY);
-
-    if (option) {
-        printf("\n\r\n\r");
-        printf("\033[1;30mPresione la tecla Q para salir\033[0m");
-    }
-
-    MoveCursorToOrigin();
-}
-
-void *KeyListener() {
+void *keyListener() {
     while (!QUIT) {
         int key = getch();
-        if (key == QUIT_KEY)
+        if (key == "q")
             QUIT = 1;
         else if (key == KEY_UP) {
             if (DELAY - DELAY_INTERVAL != 0)
@@ -136,29 +45,29 @@ void *KeyListener() {
     }
 }
 
-void *AutoFantastico() {
-    Clear();
+void *autoFantastico() {
+    clear();
     while (!QUIT) {
         unsigned char DISPLAY = 0x80;
         for (int i = 0; i < 7; i++) {
             if (QUIT)
                 break;
-            DisplayBinary(DISPLAY, 1);
+            displayBinary(DISPLAY, 1);
             DISPLAY = DISPLAY >> 1;
-            Delay(DELAY);
+            delay(DELAY);
         }
         for (int i = 0; i < 7; i++) {
             if (QUIT)
                 break;
-            DisplayBinary(DISPLAY, 1);
+            displayBinary(DISPLAY, 1);
             DISPLAY = DISPLAY << 1;
-            Delay(DELAY);
+            delay(DELAY);
         }
     }
 }
 
-void *ElChoque() {
-    Clear();
+void *choque() {
+    clear();
     while (!QUIT) {
         unsigned char SUB_DISPLAY_1 = 0x80;
         unsigned char SUB_DISPLAY_2 = 0x01;
@@ -168,16 +77,16 @@ void *ElChoque() {
             DISPLAY = SUB_DISPLAY_1 + SUB_DISPLAY_2;
             if (QUIT)
                 break;
-            DisplayBinary(DISPLAY, 2);
+            displayBinary(DISPLAY, 2);
             SUB_DISPLAY_1 = SUB_DISPLAY_1 >> 1;
             SUB_DISPLAY_2 = SUB_DISPLAY_2 << 1;
-            Delay(DELAY);
+            delay(DELAY);
         }
     }
 }
 
-void *ElRebote() {
-    Clear();
+void *rebote() {
+    clear();
     while (!QUIT) {
         unsigned char DISPLAY = 0x80;
 
@@ -185,134 +94,100 @@ void *ElRebote() {
             for (DISPLAY; DISPLAY != 0b1; DISPLAY = DISPLAY >> 1) {
                 if (QUIT)
                     break;
-                DisplayBinary(DISPLAY, 3);
-                Delay(DELAY);
+                displayBinary(DISPLAY, 3);
+                delay(DELAY);
             }
             for (int j = 0; j < r - 1; j++) {
                 if (QUIT)
                     break;
-                DisplayBinary(DISPLAY, 3);
+                displayBinary(DISPLAY, 3);
                 DISPLAY = DISPLAY << 1;
-                Delay(DELAY);
+                delay(DELAY);
             }
         }
         if (QUIT)
             break;
-        DisplayBinary(DISPLAY, 3);
-        Delay(DELAY);
+        displayBinary(DISPLAY, 3);
+        delay(DELAY);
     }
 }
 
-void *ElEspiral() {
-    Clear();
-    unsigned char DISPLAY = 0;
-
-    DisplayBinary(DISPLAY, 4);
-
+void *chargeBar() {
+    clear();
     while (!QUIT) {
-        unsigned char SUB_DISPLAY_1 = 0x80;
-        unsigned char SUB_DISPLAY_2 = 0x01;
-        DISPLAY = 0;
-
-        for (int i = 0; i < 4; i++) {
-            DISPLAY += SUB_DISPLAY_1;
-            SUB_DISPLAY_1 = SUB_DISPLAY_1 >> 1;
+        printf("Mostrando Barra de Carga\n");
+        unsigned char led = 0x80;
+        for (int i = 0; i < NUM_LEDS - 1; i++) {
             if (QUIT)
                 break;
-            DisplayBinary(DISPLAY, 4);
-            Delay(DELAY);
-            DISPLAY += SUB_DISPLAY_2;
-            SUB_DISPLAY_2 = SUB_DISPLAY_2 << 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 4);
-            Delay(DELAY);
+            displayBinary(led, 4);
+            sleep(1);
+            led |= 0x80 >> (i + 1);
         }
-        for (int i = 0; i < 4; i++) {
-            DISPLAY -= SUB_DISPLAY_2;
-            SUB_DISPLAY_2 = SUB_DISPLAY_2 << 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 4);
-            Delay(DELAY);
-            DISPLAY -= SUB_DISPLAY_1;
-            SUB_DISPLAY_1 = SUB_DISPLAY_1 >> 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 4);
-            Delay(DELAY);
-        }
+        if (QUIT)
+            break;
+        displayBinary(led, 4);
+        sleep(1);
     }
 }
 
-void *ElCaos() {
-    Clear();
-    unsigned char DISPLAY = 0;
+void disp_binary(unsigned char pattern) {
+    for (int t = 128; t > 0; t >>= 1) {
+        if (pattern & t) {
+            printf("*");
+        } else {
+            printf("-");
+        }
+    }
+    printf("\n");
+}
+
+void *pendulo() {
+    clear();
     while (!QUIT) {
-        unsigned char SUB_DISPLAY_1 = 0x80;
-        unsigned char SUB_DISPLAY_2 = 0x01;
+        printf("Mostrando pendulo\n");
+        unsigned char patrones[NUM_PATTERNS] = {
+            0x88, 0x48, 0x28, 0x18, 0x14, 0x12, 0x11,
+            0x11, 0x12, 0x14, 0x18, 0x28, 0x48, 0x88
+        };
 
-        for (int i = 0; i < 4; i++) {
-            DISPLAY += SUB_DISPLAY_1;
-            SUB_DISPLAY_1 = SUB_DISPLAY_1 >> 1;
+        for (int i = 0; i < NUM_PATTERNS; i++) {
             if (QUIT)
                 break;
-            DisplayBinary(DISPLAY, 5);
-            Delay(DELAY);
-            DISPLAY += SUB_DISPLAY_2;
-            SUB_DISPLAY_2 = SUB_DISPLAY_2 << 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 5);
-            Delay(DELAY);
-        }
-        for (int i = 0; i < 4; i++) {
-            DISPLAY -= SUB_DISPLAY_2;
-            SUB_DISPLAY_2 = SUB_DISPLAY_2 >> 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 5);
-            Delay(DELAY);
-            DISPLAY -= SUB_DISPLAY_1;
-            SUB_DISPLAY_1 = SUB_DISPLAY_1 << 1;
-            if (QUIT)
-                break;
-            DisplayBinary(DISPLAY, 5);
-            Delay(DELAY);
+            displayBinary(patrones[i], 5);
+            sleep(1);
         }
     }
 }
 
-void App() {
+void app() {
     unsigned char option[1];
-    Clear();
+    clear();
 
     int i = 0;
     for (i; i < 3; i++) {
-        Delay(2000);
-        Clear();
-        if (Login())
-            break;
+        delay(2000);
+        clear();
     }
 
     if (i == 3)
         exit(0);
 
     do {
-        Delay(2000);
-        DisplayBinary(0, 0);
-        Clear();
+        delay(2000);
+        displayBinary(0, 0);
+        clear();
         QUIT = 0;
 
-        printf("------ S E C U E N C I A S  D E  L U C E S ------\n\r");
+        printf("------ M E N U ------\n\r");
         printf("1. Auto Fantastico\n\r");
-        printf("2. El Choque\n\r");
-        printf("3. El Rebote\n\r");
-        printf("4. El Espiral\n\r");
-        printf("5. El Caos\n\r");
+        printf("2. Choque\n\r");
+        printf("3. Rebote\n\r");
+        printf("4. Barra de Carga\n\r");
+        printf("5. Pendulo\n\r");
         printf("0. Salir\n\r");
-        printf("-------------------------------------------------\n\r");
-        printf("\n\rSeleccione una opcion: ");
+        printf("\n\r");
+        printf("\n\r---> ");
 
         option[0] = getchar();
 
@@ -328,8 +203,8 @@ void App() {
 
             case '1':
                 DELAY = DELAY_1;
-                pthread_create(&threads[0], NULL, KeyListener, NULL);
-                pthread_create(&threads[1], NULL, AutoFantastico, NULL);
+                pthread_create(&threads[0], NULL, keyListener, NULL);
+                pthread_create(&threads[1], NULL, autoFantastico, NULL);
                 pthread_join(threads[0], NULL);
                 pthread_join(threads[1], NULL);
                 DELAY_1 = DELAY;
@@ -337,8 +212,8 @@ void App() {
                 break;
             case '2':
                 DELAY = DELAY_2;
-                pthread_create(&threads[0], NULL, KeyListener, NULL);
-                pthread_create(&threads[1], NULL, ElChoque, NULL);
+                pthread_create(&threads[0], NULL, keyListener, NULL);
+                pthread_create(&threads[1], NULL, choque, NULL);
                 pthread_join(threads[0], NULL);
                 pthread_join(threads[1], NULL);
                 DELAY_2 = DELAY;
@@ -346,8 +221,8 @@ void App() {
                 break;
             case '3':
                 DELAY = DELAY_3;
-                pthread_create(&threads[0], NULL, KeyListener, NULL);
-                pthread_create(&threads[1], NULL, ElRebote, NULL);
+                pthread_create(&threads[0], NULL, keyListener, NULL);
+                pthread_create(&threads[1], NULL, rebote, NULL);
                 pthread_join(threads[0], NULL);
                 pthread_join(threads[1], NULL);
                 DELAY_3 = DELAY;
@@ -355,8 +230,8 @@ void App() {
                 break;
             case '4':
                 DELAY = DELAY_4;
-                pthread_create(&threads[0], NULL, KeyListener, NULL);
-                pthread_create(&threads[1], NULL, ElEspiral, NULL);
+                pthread_create(&threads[0], NULL, keyListener, NULL);
+                pthread_create(&threads[1], NULL, chargeBar, NULL);
                 pthread_join(threads[0], NULL);
                 pthread_join(threads[1], NULL);
                 DELAY_4 = DELAY;
@@ -364,8 +239,8 @@ void App() {
                 break;
             case '5':
                 DELAY = DELAY_5;
-                pthread_create(&threads[0], NULL, KeyListener, NULL);
-                pthread_create(&threads[1], NULL, ElCaos, NULL);
+                pthread_create(&threads[0], NULL, keyListener, NULL);
+                pthread_create(&threads[1], NULL, pendulo, NULL);
                 pthread_join(threads[0], NULL);
                 pthread_join(threads[1], NULL);
                 DELAY_5 = DELAY;
@@ -373,8 +248,8 @@ void App() {
                 break;
             case '0':
                 printf("\n\n\rSaliendo del programa...\n\r");
-                Delay(2000);
-                Clear();
+                delay(2000);
+                clear();
                 exit(0);
                 break;
             default:
@@ -391,7 +266,88 @@ int main() {
     noecho();
     cbreak();
 
-    App();
+    app();
 
     endwin();
+}
+
+// Desarrollo de funciones
+
+void delay(size_t a) {
+    a = a * 100000;
+    while (a--);
+}
+
+void moveCursorToOrigin() {
+    unsigned int i = 10;
+    while (i--)
+        printf("\033[F");
+}
+
+void clear() {
+    printf("\033[2J");
+    moveCursorToOrigin();
+}
+
+void displayBinary(unsigned char DISPLAY, unsigned int option) {
+    char display[8];
+    int i = 0;
+    for (unsigned int POINTER = 0x80; POINTER > 0; POINTER = POINTER >> 1) {
+        if (POINTER & DISPLAY) {
+            display[i] = '*';
+            i++;
+        } else {
+            display[i] = '_';
+            i++;
+        }
+    }
+
+    switch (option) {
+        case 1:
+            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mAuto Fantastico\033[0m\n\r\n\r");
+            break;
+        case 2:
+            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mChoque\033[0m\n\r\n\r");
+            break;
+        case 3:
+            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mRebote\033[0m\n\r\n\r");
+            break;
+        case 4:
+            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mBarra de Carga\033[0m\n\r\n\r");
+            break;
+        case 5:
+            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mPendulo\033[0m\n\r\n\r");
+            break;
+        case 0:
+            break;
+    }
+
+    printf("%s\n\n\r\033[1;33mDELAY: \033[0m%d   ", display, DELAY);
+
+    if (option) {
+        printf("\n\r\n\r");
+        printf("\033[1;30mPresione la tecla Q para salir\033[0m");
+    }
+
+    moveCursorToOrigin();
+}
+
+void configurarPines(void) {
+    pioInit(); // inicializa para usar EasyPIO
+    for (int i = 0; i < 8; i++) {
+        pinMode(led[i], OUTPUT); // Define si es entrada o salida
+    }// Van a ser los 8 salidas
+
+}
+
+void mostrarLuces(unsigned char output) {
+    for (int j = 0; j < 8; j++) {
+        digitalWrite(led[j], (output >> j) & 1);// Escribe a un puerto
+    }
+}
+
+void apagarLeds() {
+    unsigned char apagado = 0x00; //es un hexa de 0000 0000
+    mostrarLuces(apagado);
+
 }
