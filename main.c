@@ -1,11 +1,12 @@
 //
 // Created by Octavio on 6/15/2024.
-//cd /mnt/c/Users/mateo/Documents
+//cd /mnt/c/Users/mateo/Documents/ArqC1
 #include <curses.h>
 #include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "EasyPIO.h"
 
 // CONSTANTS
 #define PASSWORD "12345" //contraseña
@@ -21,6 +22,9 @@ size_t DELAY_2 = DEFAULT_DELAY;
 size_t DELAY_3 = DEFAULT_DELAY;
 size_t DELAY_4 = DEFAULT_DELAY;
 size_t DELAY_5 = DEFAULT_DELAY;
+
+const unsigned char led[] = {14, 15, 18, 23, 24, 25, 8, 7};
+
 
 void Delay(size_t a) {
     a = a * 100000;
@@ -94,8 +98,7 @@ void DisplayBinary(unsigned char DISPLAY, unsigned int option) {
 
     switch (option) {
         case 1:
-            printf(
-                    "\033[1;31mSECUENCIA:\033[0m \033[1;36mAuto Fantastico\033[0m\n\r\n\r");
+            printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mAuto Fantastico\033[0m\n\r\n\r");
             break;
         case 2:
             printf("\033[1;31mSECUENCIA:\033[0m \033[1;36mEl Choque\033[0m\n\r\n\r");
@@ -336,7 +339,31 @@ void App() {
     } while (1);
 }
 
+void pinSetup(void) {
+    pioInit();
+
+    for (int i = 0; i < 8; i++) {
+        pinMode(led[i], OUTPUT);
+    }
+
+}
+
+void LedMostrar(unsigned char output) {
+
+    for (int j = 0; j < 8; j++) {
+        digitalWrite(led[j], (output >> j) & 1);
+    }
+
+}
+
+void Apagar() {
+    unsigned char off = 0x0;
+    ledShow(off);
+
+}
+
 int main() {
+    pinSetup();
     initscr();             // Inicializar la pantalla de ncurses
     keypad(stdscr, TRUE);  // Habilitar la entrada de teclado especial
     nodelay(stdscr, TRUE); // Configurar getch() para no bloquear
